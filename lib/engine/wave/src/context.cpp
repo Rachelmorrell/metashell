@@ -18,6 +18,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <variant>
 
 namespace metashell
 {
@@ -136,6 +137,7 @@ namespace metashell
         {
           boost::wave::language_support result =
               language_support(cfg_.config.standard);
+          result = boost::wave::enable_has_include(result);
           if (cfg_.long_long)
           {
             result = boost::wave::enable_long_long(result);
@@ -168,7 +170,7 @@ namespace metashell
 
         for (const auto& macro : cfg_.config.macros)
         {
-          mpark::visit([&ctx_](const auto& m_) { apply(ctx_, m_); }, macro);
+          std::visit([&ctx_](const auto& m_) { wave::apply(ctx_, m_); }, macro);
         }
       }
 

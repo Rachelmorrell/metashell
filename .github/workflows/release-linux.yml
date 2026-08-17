@@ -1,0 +1,49 @@
+name: Release Linux
+
+on:
+  workflow_dispatch:
+  release:
+    types: published
+
+jobs:
+  run:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build image
+      run: docker build . -f Dockerfile -t metashell:linux --build-arg J=2
+
+    - name: Run image
+      run: docker run -v $PWD:/tmp/devenv -t metashell:linux
+
+    - name: Extract informations
+      id: extract
+      shell: bash
+      run: |
+          tools/github_action_infos.py ${{ github.event.repository.full_name }} ${GITHUB_REF##*/}
+          echo '##[set-output name=platform_id;]debian11.1_x86_64'
+
+
+    - name: Deploy .deb on Github
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.extract.outputs.upload_url }}
+        asset_path: bin/${{ steps.extract.outputs.platform_id }}/metashell/metashell_${{ steps.extract.outputs.tag }}_amd64.deb
+        asset_name: metashell_${{ steps.extract.outputs.tag }}_amd64.deb
+        asset_content_type: application/vnd.debian.binary-package
+
+    - name: Deploy .rpm on Github
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.extract.outputs.upload_url }}
+        asset_path: bin/${{ steps.extract.outputs.platform_id }}/metashell/metashell-${{ steps.extract.outputs.tag }}-1.x86_64.rpm
+        asset_name: metashell-${{ steps.extract.outputs.tag }}-1.x86_64.rpm
+        asset_content_type: application/x-rpm

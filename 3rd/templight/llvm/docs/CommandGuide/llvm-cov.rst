@@ -52,9 +52,7 @@ To use :program:`llvm-cov gcov`, you must first build an instrumented version
 of your application that collects coverage data as it runs. Compile with the
 ``-fprofile-arcs`` and ``-ftest-coverage`` options to add the
 instrumentation. (Alternatively, you can use the ``--coverage`` option, which
-includes both of those other options.) You should compile with debugging
-information (``-g``) and without optimization (``-O0``); otherwise, the
-coverage data cannot be accurately mapped back to the source code.
+includes both of those other options.)
 
 At the time you compile the instrumented code, a ``.gcno`` data file will be
 generated for each object file. These ``.gcno`` files contain half of the
@@ -105,6 +103,10 @@ OPTIONS
 
  Display branch counts instead of probabilities (requires -b).
 
+.. option:: -m, --demangled-names
+
+ Demangle function names.
+
 .. option:: -f, --function-summaries
 
  Show a summary of coverage for each function instead of just one summary for
@@ -126,7 +128,7 @@ OPTIONS
  Do not output any ``.gcov`` files. Summary information is still
  displayed.
 
-.. option:: -o=<DIR|FILE>, --object-directory=<DIR>, --object-file=<FILE>
+.. option:: -o <DIR|FILE>, --object-directory=<DIR>, --object-file=<FILE>
 
  Find objects in DIR or based on FILE's path. If you specify a particular
  object file, the coverage data files are expected to have the same base name
@@ -142,6 +144,19 @@ OPTIONS
  removed and ``..`` directories replaced by ``^`` characters. When used with
  the --long-file-names option, this applies to both the main file name and the
  included file name.
+
+.. option:: -r
+
+ Only dump files with relative paths or absolute paths with the prefix specified
+ by ``-s``.
+
+.. option:: -s <string>
+
+ Source prefix to elide.
+
+.. option:: -t, --stdout
+
+ Print to stdout instead of producing ``.gcov`` files.
 
 .. option:: -u, --unconditional-branches
 
@@ -173,14 +188,14 @@ SHOW COMMAND
 SYNOPSIS
 ^^^^^^^^
 
-:program:`llvm-cov show` [*options*] -instr-profile *PROFILE* *BIN* [*-object BIN,...*] [[*-object BIN*]] [*SOURCES*]
+:program:`llvm-cov show` [*options*] -instr-profile *PROFILE* [*BIN*] [*-object BIN*]... [*-sources*] [*SOURCE*]...
 
 DESCRIPTION
 ^^^^^^^^^^^
 
 The :program:`llvm-cov show` command shows line by line coverage of the
-binaries *BIN*,...  using the profile data *PROFILE*. It can optionally be
-filtered to only show the coverage for the files listed in *SOURCES*.
+binaries *BIN*...  using the profile data *PROFILE*. It can optionally be
+filtered to only show the coverage for the files listed in *SOURCE*....
 
 *BIN* may be an executable, object file, dynamic library, or archive (thin or
 otherwise).
@@ -250,10 +265,10 @@ OPTIONS
 
  Show code coverage only for functions with the given name.
 
-.. option:: -name-whitelist=<FILE>
+.. option:: -name-allowlist=<FILE>
 
  Show code coverage only for functions listed in the given file. Each line in
- the file should start with `whitelist_fun:`, immediately followed by the name
+ the file should start with `allowlist_fun:`, immediately followed by the name
  of the function to accept. This name can be a wildcard expression.
 
 .. option:: -name-regex=<PATTERN>
@@ -295,6 +310,12 @@ OPTIONS
  specified). When N=0, llvm-cov auto-detects an appropriate number of threads to
  use. This is the default.
 
+.. option:: -compilation-dir=<dir>
+
+ Directory used as a base for relative coverage mapping paths. Only applicable
+ when binaries have been compiled with one of `-fcoverage-prefix-map`
+ `-fcoverage-compilation-dir`, or `-ffile-compilation-dir`.
+
 .. option:: -line-coverage-gt=<N>
 
  Show code coverage only for functions with line coverage greater than the
@@ -321,6 +342,24 @@ OPTIONS
  to generate the coverage data on one machine, and then use llvm-cov on a
  different machine where you have the same files on a different path.
 
+.. option:: -coverage-watermark=<high>,<low>
+
+ Set high and low watermarks for coverage in html format output. This allows you
+ to set the high and low watermark of coverage as desired, green when
+ coverage >= high, red when coverage < low, and yellow otherwise. Both high and
+ low should be between 0-100 and high > low.
+
+.. option:: -debuginfod
+
+Use debuginfod to look up coverage mapping for binary IDs present in the profile
+but not in any object given on the command line. Defaults to true if debuginfod
+is compiled in and configured via the DEBUGINFOD_URLS environment variable.
+
+.. option:: -debug-file-directory=<dir>
+
+Provides local directories to search for objects corresponding to binary IDs in
+the profile (as with debuginfod). Defaults to system build ID directories.
+
 .. program:: llvm-cov report
 
 .. _llvm-cov-report:
@@ -331,14 +370,14 @@ REPORT COMMAND
 SYNOPSIS
 ^^^^^^^^
 
-:program:`llvm-cov report` [*options*] -instr-profile *PROFILE* *BIN* [*-object BIN,...*] [[*-object BIN*]] [*SOURCES*]
+:program:`llvm-cov report` [*options*] -instr-profile *PROFILE* [*BIN*] [*-object BIN*]... [*-sources*] [*SOURCE*]...
 
 DESCRIPTION
 ^^^^^^^^^^^
 
 The :program:`llvm-cov report` command displays a summary of the coverage of
-the binaries *BIN*,... using the profile data *PROFILE*. It can optionally be
-filtered to only show the coverage for the files listed in *SOURCES*.
+the binaries *BIN*... using the profile data *PROFILE*. It can optionally be
+filtered to only show the coverage for the files listed in *SOURCE*....
 
 *BIN* may be an executable, object file, dynamic library, or archive (thin or
 otherwise).
@@ -364,6 +403,10 @@ OPTIONS
  universal binary or to use an architecture that does not match a
  non-universal binary.
 
+.. option:: -show-region-summary
+
+ Show statistics for all regions. Defaults to true.
+
 .. option:: -show-branch-summary
 
  Show statistics for all branch conditions. Defaults to true.
@@ -380,6 +423,24 @@ OPTIONS
 
  Skip source code files with file paths that match the given regular expression.
 
+.. option:: -compilation-dir=<dir>
+
+ Directory used as a base for relative coverage mapping paths. Only applicable
+ when binaries have been compiled with one of `-fcoverage-prefix-map`
+ `-fcoverage-compilation-dir`, or `-ffile-compilation-dir`.
+
+.. option:: -debuginfod
+
+Attempt to look up coverage mapping from objects using debuginfod. This is
+attempted by default for binary IDs present in the profile but not provided on
+the command line, so long as debuginfod is compiled in and configured via
+DEBUGINFOD_URLS.
+
+.. option:: -debug-file-directory=<dir>
+
+Provides a directory to search for objects corresponding to binary IDs in the
+profile.
+
 .. program:: llvm-cov export
 
 .. _llvm-cov-export:
@@ -390,13 +451,13 @@ EXPORT COMMAND
 SYNOPSIS
 ^^^^^^^^
 
-:program:`llvm-cov export` [*options*] -instr-profile *PROFILE* *BIN* [*-object BIN,...*] [[*-object BIN*]] [*SOURCES*]
+:program:`llvm-cov export` [*options*] -instr-profile *PROFILE* [*BIN*] [*-object BIN*]... [*-sources*] [*SOURCE*]...
 
 DESCRIPTION
 ^^^^^^^^^^^
 
 The :program:`llvm-cov export` command exports coverage data of the binaries
-*BIN*,... using the profile data *PROFILE* in either JSON or lcov trace file
+*BIN*... using the profile data *PROFILE* in either JSON or lcov trace file
 format.
 
 When exporting JSON, the regions, functions, branches, expansions, and
@@ -404,7 +465,7 @@ summaries of the coverage data will be exported. When exporting an lcov trace
 file, the line-based coverage, branch coverage, and summaries will be exported.
 
 The exported data can optionally be filtered to only export the coverage
-for the files listed in *SOURCES*.
+for the files listed in *SOURCE*....
 
 For information on compiling programs for coverage and generating profile data,
 see :ref:`llvm-cov-show`.
@@ -448,3 +509,21 @@ OPTIONS
 
  Use N threads to export coverage data. When N=0, llvm-cov auto-detects an
  appropriate number of threads to use. This is the default.
+
+.. option:: -compilation-dir=<dir>
+
+ Directory used as a base for relative coverage mapping paths. Only applicable
+ when binaries have been compiled with one of `-fcoverage-prefix-map`
+ `-fcoverage-compilation-dir`, or `-ffile-compilation-dir`.
+
+.. option:: -debuginfod
+
+Attempt to look up coverage mapping from objects using debuginfod. This is
+attempted by default for binary IDs present in the profile but not provided on
+the command line, so long as debuginfod is compiled in and configured via
+DEBUGINFOD_URLS.
+
+.. option:: -debug-file-directory=<dir>
+
+Provides a directory to search for objects corresponding to binary IDs in the
+profile.

@@ -3,6 +3,11 @@
 ## Not in any release yet
 
 * New features
+    * Support gcc 13
+
+## Version 5.0.0
+
+* New features
     * New engine: `auto`. It chooses the engine to use based on the compiler
       specified in the engine arguments.
     * Support for displaying the currently used engine (`#msh engine show`)

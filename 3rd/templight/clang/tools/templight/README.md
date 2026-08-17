@@ -52,7 +52,7 @@ The debugger is enabled by the templight option `-debugger`, and it supports the
 
 Templight must be compiled from source, alongside the Clang source code.
 
-1. [Follow the instructions from LLVM/Clang](http://clang.llvm.org/get_started.html) to get a local copy of the **latest git master** of the Clang source code.
+1. [Follow the instructions from LLVM/Clang](http://clang.llvm.org/get_started.html) to get a local copy of the Clang source code.
 
 2. Clone the templight repository into the clang directories, as follows:
 ```bash
@@ -79,6 +79,9 @@ Templight must be compiled from source, alongside the Clang source code.
 ```
 
 5. If successful, there should be a `templight` and a `templight++` executable in the build/bin folder.
+
+**NOTE**: You do not need to apply the patch `templight_clang_patch.diff` and you can ignore the corresponding
+version numbers in `templight_clang_version.txt`. Those are meant for other uses case (testing some hooks within clang).
 
 
 ### Invoking Templight
